@@ -6,7 +6,7 @@
 import json, os, sys, re, datetime, urllib.request, urllib.parse
 
 BASE = os.path.dirname(os.path.abspath(__file__))
-PAGES = 'https://1930258243.github.io/moligod-reports/reports/'
+PAGES = 'https://wbze060-commits.github.io/moligod-reports/reports/'
 TYPE_MAP = {'daily': '日报', 'weekly': '周报', 'monthly': '月报'}
 # 用户持仓子弹（与今日行情表名称一致），推送里单列
 HOLDINGS = ['12.7x55mm PS12A', '.45 ACP FMJ', '5.8x42mm DVP88', '.357 Magnum FMJ']
@@ -99,7 +99,7 @@ def extract_news(html, limit=3):
 def main():
     rtype = sys.argv[1] if len(sys.argv) > 1 else 'daily'
     date = sys.argv[2] if len(sys.argv) > 2 else datetime.date.today().isoformat()
-    key = os.environ.get('SCT_KEY', '')
+    key = os.environ.get('SCT_KEY', '').strip()
     if not key:
         print('NO_SCT_KEY'); sys.exit(1)
     label = TYPE_MAP.get(rtype, '日报')
