@@ -7,6 +7,7 @@
 每日推送上限：DAILY_LIMIT 条（默认 5，Server酱免费版上限），达到后当天静默。
 """
 import json, os, urllib.request, urllib.parse, gzip, time
+from china_time import china_now
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 STATEF = os.path.join(BASE, 'g3trade_state.json')
@@ -73,7 +74,7 @@ def get_key():
 
 def load_daily():
     """返回 (今日已发条数, 今日日期)"""
-    today = time.strftime('%Y-%m-%d')
+    today = china_now().strftime('%Y-%m-%d')
     try:
         d = json.load(open(DAILYF, encoding='utf-8'))
         if d.get('date') == today:
@@ -92,15 +93,13 @@ def save_daily(count, today):
 
 
 def _sync_cloud(path, obj, token):
-    import ssl
-    ctx = ssl._create_unverified_context()
-    base = 'https://api.github.com/repos/1930258243/moligod-reports/contents/' + path
+    base = 'https://api.github.com/repos/wbze060-commits/moligod-reports/contents/' + path
     req = urllib.request.Request(base)
     req.add_header('Authorization', 'token %s' % token)
     req.add_header('Accept', 'application/vnd.github+json')
     sha = None
     try:
-        with urllib.request.urlopen(req, context=ctx, timeout=20) as r:
+        with urllib.request.urlopen(req, timeout=20) as r:
             sha = json.loads(r.read().decode('utf-8')).get('sha')
     except Exception:
         pass  # 文件不存在则直接创建
@@ -114,7 +113,7 @@ def _sync_cloud(path, obj, token):
     req.add_header('Accept', 'application/vnd.github+json')
     req.add_header('Content-Type', 'application/json')
     try:
-        with urllib.request.urlopen(req, context=ctx, timeout=20) as r:
+        with urllib.request.urlopen(req, timeout=20) as r:
             return r.status
     except Exception as e:
         print('cloud sync fail:', repr(e)[:120])
@@ -136,7 +135,7 @@ def main():
             prev = json.load(open(STATEF, encoding='utf-8'))
         except Exception:
             prev = {}
-    now = time.strftime('%m-%d %H:%M')
+    now = china_now().strftime('%m-%d %H:%M')
     buys, sells = [], []
     cur = {}
     for iid, (name, buy, sell, bep) in WATCH.items():
