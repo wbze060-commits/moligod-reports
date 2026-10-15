@@ -182,7 +182,7 @@ def render_news_section(news, status, now=None):
         status = {'status':'manual_only'}
     scope = _e(source.get("scope") or "公告源范围未标注")
     status = status or {}
-    last_success = _beijing_time(status.get("last_success_at") or filtered.get("updated"))
+    last_success = _beijing_time(status.get("last_success_at") or filtered.get("updated")) if filtered.get('region') == 'CN' else '未记录'
     status_line = "公告源：%s；上次成功刷新（北京时间）：%s" % (_e(source.get("name") or "未配置"), last_success)
     warning = ""
     if status.get('status') == 'manual_only':

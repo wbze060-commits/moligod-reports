@@ -56,12 +56,13 @@ def get_plan(base, kind, now=None):
 
 def alert_text(item, plan, action, message, now):
     label = '日抛' if plan['kind'] == 'daily' else '周抛'
-    return ('%s｜%s\n北京时间：%s\n%s\n现价：%s；计划买入：%d–%d；目标卖价：%d\n'
+    quote_label = '计划报价（可能已过期）' if action in ('TIME_EXIT', 'EXPIRED') else '现价（须实盘核对）'
+    return ('%s｜%s\n北京时间：%s\n%s\n%s：%s；计划买入：%d–%d；目标卖价：%d\n'
             '保本卖价（13%%费率口径）：%d；含滑点缓冲：%d\n'
             '跌破%d取消计划；有效至%s\n税后含2%%滑点估算空间：%.2f/发（%.2f%%）\n'
             '未记录你的实际持仓和成本；只有持有且扣费后达到个人目标时才卖。\n%s') % (
                 label, item['name'], now.strftime('%Y-%m-%d %H:%M'), message,
-                item['latest'], item['buy_low'], item['buy_high'], item['sell_target'],
+                quote_label, item['latest'], item['buy_low'], item['buy_high'], item['sell_target'],
                 item['break_even'], item['break_even_with_slippage'], item['invalidate_below'],
                 plan['valid_until'], item['net_per_round'], item['net_margin_pct'], plan['risk'])
 
