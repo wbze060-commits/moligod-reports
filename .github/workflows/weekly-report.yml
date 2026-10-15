@@ -15,6 +15,9 @@ jobs:
           python-version: '3.12'
       - name: 抓取全部 68 款子弹数据
         run: python cloud_fetch.py
+      - name: 更新 Steam 官方公告
+        run: python cloud_news.py
+        continue-on-error: true
       - name: 生成全子弹周报
         run: python cloud_report_all.py weekly "reports/周报_$(date +%F).html"
       - name: 安装 Chrome（PDF 转换）
