@@ -78,23 +78,30 @@ def extract_top_buy(html, limit=3):
 
 
 def extract_news(html, limit=3):
-    """提取消息面要点（纯文本，前 limit 条）"""
-    m = re.search(r'<h2>消息面与价格走势预测.*?</h2>(.*?)(?:<h2>|$)', html, re.S)
-    if not m:
+    """提取报告中的官方公告和仍有效的人工观点。"""
+    match = re.search(
+        r'<h2>官方公告与有效观点</h2>(.*?)(?:<h2>|$)', html, re.S
+    )
+    if not match:
+        match = re.search(
+            r'<h2>消息面与价格走势预测.*?</h2>(.*?)(?:<h2>|$)', html, re.S
+        )
+    if not match:
         return []
-    txt = re.sub(r'<[^>]+>', '', m.group(1))
-    txt = re.sub(r'\s+', ' ', txt).strip()
-    # 按编号切分
-    items = re.split(r'\d+\.', txt)
+    body = match.group(1)
+    cards = re.findall(r'<article class="news-item">(.*?)</article>', body, re.S)
+    if not cards:
+        cards = [body]
     out = []
-    for it in items:
-        it = it.strip()
-        if it and len(it) > 3:
-            out.append(it)
+    for card in cards:
+        text = re.sub(r'<br\s*/?>', ' ', card, flags=re.I)
+        text = re.sub(r'<[^>]+>', ' ', text)
+        text = __import__('html').unescape(re.sub(r'\s+', ' ', text)).strip()
+        if text:
+            out.append(text[:240])
         if len(out) >= limit:
             break
     return out
-
 
 def main():
     rtype = sys.argv[1] if len(sys.argv) > 1 else 'daily'
@@ -148,7 +155,7 @@ def main():
 
     news = extract_news(html)
     if news:
-        lines.append('📰 消息面：')
+        lines.append('📰 官方公告 / 有效观点：')
         for it in news:
             lines.append('- ' + it[:80])
         lines.append('')
