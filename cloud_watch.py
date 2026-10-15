@@ -52,7 +52,7 @@ def main():
             alerts.append((name, old, cur, chg))
     if alerts:
         title = 'moligod 价格异动 %d 项' % len(alerts)
-        lines = ['监测时间 %s' % now]
+        lines = ['监测时间（北京时间）%s' % now]
         for name, old, cur, chg in alerts:
             arrow = '上涨' if chg > 0 else '下跌'
             lines.append('- %s %s %.1f%% (%d -> %d)' % (name, arrow, chg, old, cur))
