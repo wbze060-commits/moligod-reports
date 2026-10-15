@@ -3,7 +3,8 @@
 读取 data/catalog.json 实时价，对比上次快照，波动 >= 阈值 推送 Server酱。
 SendKey 从环境变量 SCT_KEY 读取（GitHub Actions Secret 注入）。
 """
-import json, os, urllib.request, urllib.parse, time
+import json, os, urllib.request, urllib.parse
+from china_time import china_now
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(BASE, 'data')
@@ -37,7 +38,7 @@ def main():
             prev = json.load(open(SNAP, encoding='utf-8'))
         except Exception:
             prev = {}
-    now = time.strftime('%m-%d %H:%M')
+    now = china_now().strftime('%m-%d %H:%M')
     alerts = []
     for name in WATCH:
         cur = price.get(name)
