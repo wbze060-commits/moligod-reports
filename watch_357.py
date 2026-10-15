@@ -3,7 +3,8 @@
 价格破阈值(默认800)微信提醒，带冷却去重。云端(GitHub Actions)与本地均可用。
 用法: SCT_KEY=xxx python watch_357.py  （SCT_KEY 不传则读本地 sct_sendkey.txt）
 """
-import json, os, urllib.request, urllib.parse, gzip, time, datetime
+import json, os, urllib.request, urllib.parse, gzip, time
+from china_time import china_now
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 STATEF = os.path.join(BASE, 'watch357_state.json')
@@ -53,7 +54,7 @@ def main():
         return
     latest = it.get('latest_price')
     th = it.get('today_high_price') or latest
-    now = datetime.datetime.now()
+    now = china_now()
     now_ts = time.time()
 
     st = {}
