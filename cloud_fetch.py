@@ -29,8 +29,10 @@ def get_json(opener, url):
     return json.loads(data)
 
 def main():
+    started_at = datetime.datetime.now(datetime.timezone.utc)
     opener = build_opener()
-    today = datetime.date.today().isoformat()
+    china_tz = datetime.timezone(datetime.timedelta(hours=8))
+    today = datetime.datetime.now(china_tz).date().isoformat()
 
     # 1. 目录(实时价)
     cat = get_json(opener, 'https://moligod.com/api/market/ammo-catalog')
@@ -69,6 +71,18 @@ def main():
         json.dump(history, f, ensure_ascii=False)
     with open(os.path.join(DATA, 'history_latest.json'), 'w', encoding='utf-8') as f:
         json.dump(history, f, ensure_ascii=False)
+
+    completed_at = datetime.datetime.now(datetime.timezone.utc)
+    market_meta = {
+        'source': 'moligod.com',
+        'started_at_utc': started_at.isoformat().replace('+00:00', 'Z'),
+        'completed_at_utc': completed_at.isoformat().replace('+00:00', 'Z'),
+        'catalog_count': len(catalog),
+        'history_count': len(history),
+        'history_window_days': 30,
+    }
+    with open(os.path.join(DATA, 'market_meta.json'), 'w', encoding='utf-8') as f:
+        json.dump(market_meta, f, ensure_ascii=False, indent=2)
 
     print('fetched items=', len(history), 'date=', today)
     print('OK')
