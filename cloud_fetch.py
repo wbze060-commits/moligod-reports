@@ -4,6 +4,8 @@
 输出: data/catalog.json (实时价) + data/history_{date}.json (K线快照) + data/latest.json (汇总)
 """
 import json, urllib.request, urllib.parse, gzip, os, time, datetime
+from report_data import collect_daily
+from pathlib import Path
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(BASE, 'data')
@@ -28,11 +30,34 @@ def get_json(opener, url):
         data = gzip.decompress(data)
     return json.loads(data)
 
+def archived_daily(data_folder, as_of):
+    result = {}
+    # Newer snapshots win; only missing calendar days are backfilled.
+    paths = sorted(Path(data_folder).glob('history_2*.json'), reverse=True)[:30]
+    for path in paths:
+        try:
+            snapshot = json.loads(path.read_text(encoding='utf-8'))
+        except (OSError, ValueError):
+            continue
+        for iid, hist in snapshot.items():
+            daily = result.setdefault(str(iid), {})
+            for day, row in collect_daily(hist, as_of).items():
+                daily.setdefault(day, row)
+    return result
+
+
 def main():
     started_at = datetime.datetime.now(datetime.timezone.utc)
     opener = build_opener()
     china_tz = datetime.timezone(datetime.timedelta(hours=8))
     today = datetime.datetime.now(china_tz).date().isoformat()
+    try:
+        with open(os.path.join(DATA, 'history_latest.json'), encoding='utf-8') as stream:
+            previous_history = json.load(stream)
+    except (OSError, ValueError):
+        previous_history = {}
+    reference = datetime.date.fromisoformat(today)
+    archive = archived_daily(DATA, reference)
 
     # 1. 目录(实时价)
     cat = get_json(opener, 'https://moligod.com/api/market/ammo-catalog')
@@ -63,6 +88,16 @@ def main():
                 'r7': ranges.get('7d') or [],
                 'r15': ranges.get('15d') or [],
             }
+            # The source can return an empty 30d range. Keep completed days while
+            # rebuilding recent days from hourly points, rather than losing history.
+            daily = dict(archive.get(str(iid)) or {})
+            daily.update(collect_daily(previous_history.get(str(iid)) or {}, reference))
+            daily.update(collect_daily(history[str(iid)], reference))
+            history[str(iid)]['r30'] = [
+                dict(time=day, avg=row['avg'], min=row['low'], max=row['high'], last=row['last'],
+                     **({'hours': row['hours']} if 'hours' in row else {}))
+                for day, row in sorted(daily.items())
+            ]
         except Exception as e:
             print('skip', iid, e)
         time.sleep(0.15)
@@ -80,6 +115,9 @@ def main():
         'catalog_count': len(catalog),
         'history_count': len(history),
         'history_window_days': 30,
+        'target_region': 'CN',
+        'history_timezone': 'Asia/Shanghai',
+        'region_note': '用户指定国服；moligod为第三方行情，交易前须核对国服实盘。',
     }
     with open(os.path.join(DATA, 'market_meta.json'), 'w', encoding='utf-8') as f:
         json.dump(market_meta, f, ensure_ascii=False, indent=2)

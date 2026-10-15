@@ -3,6 +3,8 @@ on:
   schedule:
     - cron: '30 14 1 * *'
   workflow_dispatch:
+env:
+  TZ: Asia/Shanghai
 permissions:
   contents: write
 jobs:
@@ -15,7 +17,7 @@ jobs:
           python-version: '3.12'
       - name: 抓取全部 68 款子弹数据
         run: python cloud_fetch.py
-      - name: 更新 Steam 官方公告
+      - name: 检查国服官方公告（无自动源时明确提示）
         run: python cloud_news.py
         continue-on-error: true
       - name: 生成全子弹月报
@@ -31,7 +33,11 @@ jobs:
           git config user.email "moligod-bot@users.noreply.github.com"
           git add reports data
           git commit -m "monthly report $(date +%F)" || echo "no changes"
-          git push
+          for attempt in 1 2 3; do
+            git pull --rebase -X theirs origin main
+            if git push; then break; fi
+            if [ "$attempt" = 3 ]; then exit 1; fi
+          done
       - name: 微信推送（摘要+HTML/PDF 链接）
         env:
           SCT_KEY: ${{ secrets.SCT_KEY }}

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Freshness and rolling-window helpers for the market report."""
 from datetime import date, datetime, timedelta, timezone
+import math
 
 CHINA_TZ = timezone(timedelta(hours=8))
 RECENT_DAYS = 7
@@ -22,16 +23,19 @@ def parse_history_date(value, as_of):
         return None
     if isinstance(value, (int, float)):
         timestamp = value / 1000 if value > 10_000_000_000 else value
-        return datetime.fromtimestamp(timestamp, timezone.utc).date()
+        try:
+            return datetime.fromtimestamp(timestamp, CHINA_TZ).date()
+        except (ValueError, OSError, OverflowError):
+            return None
     text = str(value).strip()
     if len(text) >= 10:
         try:
             return date.fromisoformat(text[:10])
         except ValueError:
             pass
-    if len(text) == 5 and text[2] == "-":
+    if len(text) >= 5 and text[2] == "-":
         try:
-            month, day = int(text[:2]), int(text[3:])
+            month, day = int(text[:2]), int(text[3:5])
             candidate = date(reference.year, month, day)
             if candidate > reference + timedelta(days=1):
                 candidate = date(reference.year - 1, month, day)
@@ -41,28 +45,85 @@ def parse_history_date(value, as_of):
     return None
 
 
+def positive_price(value):
+    if isinstance(value, bool):
+        return None
+    try:
+        number = float(value)
+    except (ValueError, TypeError):
+        return None
+    return number if math.isfinite(number) and number > 0 else None
+
+
+def parse_history_time(value, as_of=None):
+    """moligod MM-DD HH:MM labels use the China clock; epochs retain their zone."""
+    reference = _as_date(as_of) or datetime.now(CHINA_TZ).date()
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        try:
+            return datetime.fromtimestamp(value / 1000 if value > 10_000_000_000 else value, CHINA_TZ)
+        except (ValueError, OSError, OverflowError):
+            return None
+    text = str(value or '').strip()
+    try:
+        if len(text) >= 16 and text[4] == '-':
+            parsed = datetime.fromisoformat(text.replace('Z', '+00:00'))
+            return (parsed.replace(tzinfo=CHINA_TZ) if parsed.tzinfo is None else parsed).astimezone(CHINA_TZ)
+        if len(text) == 11 and text[2] == '-' and text[5] == ' ':
+            day = parse_history_date(text[:5], reference)
+            if day:
+                clock = datetime.strptime(text[6:], '%H:%M').time()
+                return datetime.combine(day, clock, CHINA_TZ)
+    except ValueError:
+        pass
+    return None
+
+
+def collect_hourly(history, as_of=None):
+    reference = as_of or datetime.now(CHINA_TZ)
+    if isinstance(reference, date) and not isinstance(reference, datetime):
+        reference = datetime.combine(reference, datetime.max.time(), CHINA_TZ)
+    reference = reference.replace(tzinfo=CHINA_TZ) if reference.tzinfo is None else reference.astimezone(CHINA_TZ)
+    points = {}
+    # r7 is more recent. Do not count the same hour again from r15.
+    for key in ('r7', 'r15'):
+        for row in history.get(key, []) or []:
+            stamp = parse_history_time(row.get('time'), reference)
+            price = positive_price(row.get('last'))
+            if stamp is None or price is None or stamp > reference or stamp < reference - timedelta(days=30):
+                continue
+            points.setdefault(stamp, {'time': stamp, 'price': price, 'low': positive_price(row.get('min')),
+                                      'high': positive_price(row.get('max')), 'avg': positive_price(row.get('avg'))})
+    return [points[key] for key in sorted(points)]
+
+
 def collect_daily(history, as_of=None):
-    """Build one point per date; prefer r30 and only fall back to r15/r7."""
+    """Prefer daily r30, aggregate hourly fallback without losing overlapping bars."""
     reference = _as_date(as_of) or date.today()
-    ranges = history.get("r30") or []
-    if not ranges:
-        ranges = list(history.get("r15") or []) + list(history.get("r7") or [])
     days = {}
-    for row in ranges:
+    grouped = {}
+    for point in collect_hourly(history, as_of=reference):
+        grouped.setdefault(point['time'].date().isoformat(), []).append(point)
+    for key, points in grouped.items():
+        averages = [point['avg'] or point['price'] for point in points]
+        days[key] = {'low': min(point['low'] or point['price'] for point in points),
+                     'high': max(point['high'] or point['price'] for point in points),
+                     'avg': sum(averages) / len(averages), 'avg_n': len(points),
+                     'last': points[-1]['price'], 'hours': len(points)}
+    for row in history.get('r30', []) or []:
         day = parse_history_date(row.get("time"), reference)
         if day is None or day > reference or day < reference - timedelta(days=29):
             continue
         key = day.isoformat()
-        if key in days:
-            continue
-        avg = row.get("avg")
+        avg = positive_price(row.get("avg"))
         days[key] = {
             "low": row.get("min"),
             "high": row.get("max"),
-            "avg": float(avg) if avg is not None else None,
+            "avg": avg,
             "avg_n": 1 if avg is not None else 0,
             "last": row.get("last"),
         }
+        if 'hours' in row:
+            days[key]['hours'] = row['hours']
     return days
 
 
@@ -106,7 +167,7 @@ def _parse_iso(value):
     return parsed.astimezone(timezone.utc)
 
 
-def filter_fresh_news(news, now=None):
+def filter_fresh_news(news, now=None, region=None):
     """Drop legacy, malformed, or expired headlines and editorial outlook."""
     current = now or datetime.now(timezone.utc)
     if current.tzinfo is None:
@@ -116,6 +177,8 @@ def filter_fresh_news(news, now=None):
     for key in ("headlines", "outlook"):
         active = []
         for item in result.get(key, []) or []:
+            if region and item.get('region') != region:
+                continue
             expires = _parse_iso(item.get("expires_at"))
             if expires is not None and expires > current:
                 active.append(item)

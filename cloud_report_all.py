@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 """cloud_report_all.py — 全子弹版报告（68 款：26 三级 + 26 四级 + 16 五级）
 在 cloud_report.py 基础上扩展：5 级弹仅实时行情（无 30 天 K 线，只进行情表/榜单/独立板块）。
-口径：低价期=8/25-9/2；日常期=8/2-8/24；出售到手=挂价*0.87；SPIKE 不特殊处理。
+口径：国服；滚动统计与附带验证样本的日抛/周抛条件计划；出售到手估算=挂价*0.87。
 用法: python cloud_report_all.py [daily|weekly|monthly] [output.html]
 """
 import json, os, sys, datetime
 import html as html_lib
 from report_data import (CHINA_TZ, BASELINE_DAYS, RECENT_DAYS, collect_daily, filter_fresh_news, format_market_meta, parse_history_date, rolling_stats)
+from cloud_trade import get_plan
+from trade_strategy import action_for
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(BASE, 'data')
@@ -173,14 +175,19 @@ def render_current_buys(rows):
 
 
 def render_news_section(news, status, now=None):
-    filtered = filter_fresh_news(news, now=now)
+    filtered = filter_fresh_news(news, now=now, region='CN')
     source = filtered.get("source") or {}
+    if filtered.get('region') != 'CN':
+        source = {'name': '三角洲行动国服官网', 'scope': '国服；已过滤国际服及未标注区服的内容'}
+        status = {'status':'manual_only'}
     scope = _e(source.get("scope") or "公告源范围未标注")
     status = status or {}
     last_success = _beijing_time(status.get("last_success_at") or filtered.get("updated"))
     status_line = "公告源：%s；上次成功刷新（北京时间）：%s" % (_e(source.get("name") or "未配置"), last_success)
     warning = ""
-    if status.get("status") == "error":
+    if status.get('status') == 'manual_only':
+        warning = '<div class="warn">国服自动公告源暂不可用；只展示人工核验的国服官网链接。</div>'
+    elif status.get("status") == "error":
         warning = '<div class="warn">本次公告刷新失败；只显示仍在有效期内的上次成功公告。%s</div>' % _e(status.get("error"))
     elif not filtered.get("headlines"):
         warning = '<div class="warn">近30天没有仍在有效期内的行情相关官方公告。</div>'
@@ -219,6 +226,41 @@ def render_news_section(news, status, now=None):
         '<div class="warn"><b>风险提示：</b>%s</div>'
         % (status_line, scope, warning, "".join(items), outlook_html, risk)
     )
+
+
+def render_trade_plan(plan, meta, now):
+    label = '日抛' if plan['kind'] == 'daily' else '周抛'
+    window = ('早盘06:00–11:59限价买入；午后13:00–18:59到价卖出，当日到期复核清仓' if plan['kind'] == 'daily'
+              else '本周到买入区再考虑入场；达到目标可提前卖出，最晚周日18:59复核清仓')
+    cards = []
+    for item in plan['candidates']:
+        action, message = action_for(item, plan, item['latest'], now, meta)
+        stats = item['backtest']
+        cards.append(
+            '<article class="trade-item"><h3>%s｜%s</h3><p><b>%s</b></p>'
+            '<p>现价 %s；买入区 %d–%d；卖出目标 %d；保本卖价 %d（含滑点 %d）；跌破 %d 失效。</p>'
+            '<p>按买入上限估算：净空间 %.2f/发（%.2f%%），含13%%费率及2%%卖价滑点。'
+            '跌至失效线退出的估算净损失 %.2f%%，额外费用另计。</p>'
+            '<p>操作窗口：%s（北京时间）；计划截止：%s。</p>'
+            '<p>%s；历史%d天；验证%d段，成交%d次，到目标%d次（%.0f%%）；'
+            '模拟净空间合计 %.2f/发。小样本，不代表未来胜率。</p></article>' % (
+                _e(item['name']), _e(item['qualification']), _e(message), _e(item['latest']),
+                item['buy_low'], item['buy_high'], item['sell_target'], item['break_even'],
+                item['break_even_with_slippage'], item['invalidate_below'], item['net_per_round'],
+                item['net_margin_pct'], item['exit_at_floor_net_loss_pct'], _e(window),
+                _e(_beijing_time(plan['valid_until'])), _e(item['backtest_basis']),
+                item['samples'], stats['opportunities'], stats['fills'], stats['target_hits'],
+                stats['hit_rate'] * 100, stats['net_total_per_unit']))
+    if not cards:
+        cards.append('<p>暂无具备足够历史数据的%s候选；保持观望。</p>' % label)
+    if not any(item['qualified'] for item in plan['candidates']):
+        cards.insert(0, '<div class="warn">当前没有通过历史筛选的%s推荐；下列如有候选，仅供观察。</div>' % label)
+    return ('<section class="trade-plan"><h2>国服%s买卖计划</h2><p>%s（北京时间）。</p>'
+            '<p>有效期：%s 至 %s。计划价格在有效期内固定；超上限不追，过期重新评估。</p>%s'
+            '<div class="note">%s 未记录实际持仓成本；卖出提醒只对确实持有且个人成本合适的仓位适用。'
+            '日线只能近似周抛成交，小时线只能近似日抛成交。</div></section>') % (
+                label, window, _e(_beijing_time(plan['valid_from'])), _e(_beijing_time(plan['valid_until'])),
+                ''.join(cards), _e(plan['risk']))
 
 
 def render_daily(rows, today):
@@ -284,12 +326,14 @@ def main():
     t = title_map.get(rtype, '行情报告')
 
     body = render_overview(rows, today, market_meta)
+    plan_kind = 'weekly' if rtype in ('weekly', 'monthly') else 'daily'
+    plan, plan_meta = get_plan(BASE, plan_kind, now)
+    body += render_trade_plan(plan, plan_meta, now)
     if rtype == 'daily':
         body += render_daily(rows, today)
     else:
         body += render_weekly_monthly(rows, rtype, today)
     body += render_rolling_comparison(rows)
-    body += render_current_buys(rows)
     body += render_news_section(news, news_status, now=now)
 
     html = """<!DOCTYPE html><html lang="zh"><head><meta charset="utf-8">
@@ -317,7 +361,7 @@ ul{{margin:6px 0;padding-left:20px}}
 <h1>moligod {t}（全子弹版） · {today}</h1>
 <div class="sub">报告日期：{today}（{wd}）｜覆盖 {tot} 种子弹｜{market_meta}</div>
 {body}
-<div class="note">行情单位为哈夫币；税后基准按挂价×0.87估算。滚动比较使用近7天和前23天历史均价；5级弹只提供实时行情。公告来自标注的官方 Steam feed，公告不等于价格预测，统计值也不保证收益。</div>
+<div class="note">适用国服《三角洲行动》。行情单位为哈夫币；税后基准按挂价×0.87估算，另留2%卖价滑点。国服公告自动源暂不可用，国际服公告已排除。统计与模拟均不保证收益或成交。</div>
 </div></body></html>""".format(
         t=t, today=today, wd=wd, tot=len(rows),
         market_meta=html_lib.escape(format_market_meta(market_meta)), body=body)
