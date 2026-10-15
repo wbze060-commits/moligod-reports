@@ -20,10 +20,19 @@ jobs:
           SCT_KEY: ${{ secrets.SCT_KEY }}
           WATCH_THRESH: '5'
         run: python cloud_watch.py
+      - name: 国服日抛与周抛到价提醒
+        env:
+          SCT_KEY: ${{ secrets.SCT_KEY }}
+        run: python cloud_trade.py
       - name: 回传快照
+        if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data
           git commit -m "hourly watch snapshot $(date -u +%Y-%m-%dT%H:%M)" || echo "no change"
-          git push
+          for attempt in 1 2 3; do
+            git pull --rebase -X theirs origin main
+            if git push; then break; fi
+            if [ "$attempt" = 3 ]; then exit 1; fi
+          done

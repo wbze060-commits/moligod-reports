@@ -1,77 +1,13 @@
 {
-  "schema_version": 2,
-  "updated": "2026-10-15T09:09:06.238870Z",
+  "schema_version": 3,
+  "region": "CN",
+  "updated": "2026-10-15T15:20:52.748731+00:00",
   "source": {
-    "name": "Steam Community Announcements",
-    "scope": "Steam 国际服；仅作官方事实公告，不自动推断国服价格",
-    "app_id": 2507950,
-    "feed": "steam_community_announcements",
-    "api_url": "https://api.steampowered.com/ISteamNews/GetNewsForApp/v2/",
-    "documentation_url": "https://partner.steamgames.com/doc/webapi/ISteamNews"
+    "name": "三角洲行动国服官网",
+    "scope": "国服；人工核验链接，自动抓取暂不可用",
+    "url": "https://df.qq.com/"
   },
-  "headlines": [
-    {
-      "gid": "1846018067940847",
-      "title": "G.T.I. Security | Penalties for RMT",
-      "summary": "Dear Operators, The Delta Force security team is committed to maintaining a fair gaming experience, and will impose appropriate restrictions on those found to be cheating or in breach of our terms of service. Recently, our security team discovered that a large number of players have been maliciously manipulating the matchmaking mechanism to move supplies between game matches. These illegal RMT transactions primarily involved moving supplies through queue sniping, severely undermining the fairness of the in-game environment. In response to this behavior, the security team will fully recover all",
-      "source": "Steam Community Announcements",
-      "scope": "Steam 国际服",
-      "feed": "steam_community_announcements",
-      "tags": [
-        "economy"
-      ],
-      "url": "https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1846018067940847",
-      "published_at": "2026-10-12T12:50:16Z",
-      "fetched_at": "2026-10-15T09:09:06.238870Z",
-      "expires_at": "2026-11-11T12:50:16Z"
-    },
-    {
-      "gid": "1846018067933610",
-      "title": "1v1 Mode & Season Ammo, New Victory Unite Event, Mid-Season Balance Tweaks",
-      "summary": "Dear Operators, We'll be rolling out an update on 10/9 with no downtime. Gameplay and matchmaking will not be affected. If you encounter any issues after the update, please restart the game to complete the update. If your game client is out of date, you'll need to update to the latest version to log in. The main content of this update includes: Operations Events ● Let's Fight Mode Details: The brand-new 1v1 Duel mode is live in Operations! Choose your own Operator and bring in a custom loadout from outside the match. Invite a close friend and start a lightning-fast duel. Head to the mode's ent",
-      "source": "Steam Community Announcements",
-      "scope": "Steam 国际服",
-      "feed": "steam_community_announcements",
-      "tags": [
-        "ammo",
-        "season"
-      ],
-      "url": "https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1846018067933610",
-      "published_at": "2026-10-09T15:00:48Z",
-      "fetched_at": "2026-10-15T09:09:06.238870Z",
-      "expires_at": "2026-11-08T15:00:48Z"
-    },
-    {
-      "gid": "1845383656377935",
-      "title": "Detonation Weapon Balance Adjustments & Arcflare Appearance Draw Available Soon",
-      "summary": "Dear Operators, We'll be rolling out an update on 9/30 with no downtime. Gameplay and matchmaking will not be affected. If you encounter any issues after the update, please restart the game to complete the update. If your game client is out of date, you'll need to update to the latest version to log in. The main content of this update includes: Store Updates ● Arcflare Appearance Draw Event Period: Oct 2–Oct 31 Event Entry: Store > Top Pick > Arcflare Event Details: During the event, you can head to the designated entry to participate in a non-replacement draw. The first draw costs only 10 Del",
-      "source": "Steam Community Announcements",
-      "scope": "Steam 国际服",
-      "feed": "steam_community_announcements",
-      "tags": [
-        "balance"
-      ],
-      "url": "https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1845383656377935",
-      "published_at": "2026-09-30T15:00:25Z",
-      "fetched_at": "2026-10-15T09:09:06.238870Z",
-      "expires_at": "2026-10-30T15:00:25Z"
-    },
-    {
-      "gid": "1844115010491806",
-      "title": "Join & Win for Rewards, Operator Balance Adjustments, and More",
-      "summary": "Dear Operators, We'll be rolling out an update on 9/17 with no downtime. Gameplay and matchmaking will not be affected. If you encounter any issues after the update, please restart the game to complete the update. If your game client is out of date, you'll need to update to the latest version to log in. The main content of this update includes: Event in Both Modes ● Rally - Join & Win Event Period: 9/17~10/15 Details: Rally your clan, fight together, and win rewards! During the event, join or create a clan, then earn points through daily login, expanding your clan, and playing matches. The mor",
-      "source": "Steam Community Announcements",
-      "scope": "Steam 国际服",
-      "feed": "steam_community_announcements",
-      "tags": [
-        "balance"
-      ],
-      "url": "https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1844115010491806",
-      "published_at": "2026-09-17T12:00:35Z",
-      "fetched_at": "2026-10-15T09:09:06.238870Z",
-      "expires_at": "2026-10-17T12:00:35Z"
-    }
-  ],
+  "headlines": [],
   "outlook": [],
-  "risk": "官方公告不等于价格预测。价格判断只使用报告中的 moligod 行情和滚动统计。"
+  "risk": "仅使用标注CN且带国服官网链接的公告；未接通稳定自动公告源，暂不做消息面价格预测。"
 }

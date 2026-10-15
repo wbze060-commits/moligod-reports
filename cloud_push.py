@@ -70,11 +70,25 @@ def extract_top_buy(html, limit=3):
     seg = m.group(0)
     rows = re.findall(r'<tr><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td[^>]*>(.*?)</td></tr>', seg)
     out = []
-    for name, cur, dayavg, taxnet, space in rows[:limit]:
+    for name, cur, taxnet, space, rate in rows[:limit]:
         out.append((re.sub(r'<[^>]+>', '', name).strip(),
                     re.sub(r'<[^>]+>', '', cur).strip(),
                     re.sub(r'<[^>]+>', '', space).strip()))
     return out
+
+
+def extract_trade_plans(html, limit=3):
+    match = re.search(r'<section class="trade-plan">(.*?)</section>', html, re.S)
+    if not match:
+        return []
+    cards = re.findall(r'<article class="trade-item">(.*?)</article>', match.group(1), re.S)
+    if not cards:
+        cards = [match.group(1)]
+    result = []
+    for card in cards[:limit]:
+        text = re.sub(r'<[^>]+>', ' ', card)
+        result.append(__import__('html').unescape(re.sub(r'\s+', ' ', text)).strip())
+    return result
 
 
 def extract_news(html, limit=3):
@@ -116,7 +130,13 @@ def main():
         print('NO_REPORT', html_path); sys.exit(1)
     html = open(html_path, encoding='utf-8').read()
 
-    lines = ['**moligod %s · %s**' % (label, date), '']
+    lines = ['**国服 moligod %s · %s**' % (label, date), '']
+    plans = extract_trade_plans(html)
+    if plans:
+        lines.append('🎯 国服买卖计划（北京时间）：')
+        lines.extend('- ' + text for text in plans)
+        lines.append('到价后核对国服挂单；未记录你的真实持仓成本，模拟空间不保证成交或盈利。')
+        lines.append('')
 
     tags = extract_overview(html)
     if tags:
@@ -127,7 +147,7 @@ def main():
 
     hld = extract_holdings(html)
     if hld:
-        lines.append('📈 你的持仓今日：')
+        lines.append('📈 关注子弹今日：')
         for n, cur, chg in hld:
             lines.append('- %s：最新 %s（%s）' % (n, cur, chg))
         lines.append('')

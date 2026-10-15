@@ -17,23 +17,16 @@ NOW = datetime(2026, 10, 15, 12, 0, tzinfo=timezone.utc)
 class NewsRefreshTests(unittest.TestCase):
     def test_official_market_news_is_normalized_and_stale_or_external_items_are_dropped(self):
         import cloud_news
-        payload = {"appnews": {"newsitems": [
-            {"gid":"1","feedname":"steam_community_announcements","feedlabel":"Community Announcements",
-             "title":"Season Ammo Update","contents":"<p>Ammo and weapon balance changes</p>",
-             "date":int((NOW-timedelta(days=1)).timestamp()),
-             "url":"https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1"},
-            {"gid":"2","feedname":"steam_community_announcements","title":"Old weapon update",
-             "contents":"old ammo patch","date":int((NOW-timedelta(days=40)).timestamp()),
-             "url":"https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/2"},
-            {"gid":"3","feedname":"third_party_feed","title":"Ammo rumors","contents":"unverified",
-             "date":int((NOW-timedelta(days=1)).timestamp()),"url":"https://example.com/news"},
-            {"gid":"4","feedname":"steam_community_announcements","title":"Anniversary login gifts",
-             "contents":"cosmetic event","date":int((NOW-timedelta(days=1)).timestamp()),
-             "url":"https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/4"}]}}
+        payload = {"region":"CN", "headlines":[
+            {"title":"Ammo update", "summary":"Official ammunition patch", "region":"CN",
+             "published_at":(NOW-timedelta(days=1)).isoformat(), "url":"https://df.qq.com/news/example.html"},
+            {"title":"Old", "region":"CN", "published_at":(NOW-timedelta(days=40)).isoformat(),
+             "url":"https://df.qq.com/news/old.html"},
+            {"title":"Overseas ammo", "region":"GLOBAL", "published_at":NOW.isoformat(),
+             "url":"https://steamcommunity.com/news"}]}
         doc = cloud_news.parse_news_payload(payload, now=NOW)
-        self.assertEqual([item["gid"] for item in doc["headlines"]], ["1"])
-        self.assertEqual(doc["headlines"][0]["source"], "Steam Community Announcements")
-        self.assertIn("ammo", doc["headlines"][0]["summary"].lower())
+        self.assertEqual([item["title"] for item in doc["headlines"]], ["Ammo update"])
+        self.assertEqual(doc["region"], "CN")
         self.assertIn("expires_at", doc["headlines"][0])
 
     def test_html_script_content_is_removed_from_announcement_text(self):
@@ -113,11 +106,11 @@ class RollingMarketTests(unittest.TestCase):
 class ReportRenderingTests(unittest.TestCase):
     def test_stale_news_is_hidden_and_current_source_is_escaped(self):
         fresh = {
-            "source":{"name":"Steam Community Announcements","scope":"Steam 国际服"},
+            "region":"CN", "source":{"name":"三角洲行动国服官网","scope":"国服"},
             "updated":"2026-10-15T12:00:00Z",
             "headlines":[
                 {"title":"<Ammo update>","summary":"<b>official</b>",
-                 "source":"Steam Community Announcements","scope":"Steam 国际服",
+                 "source":"三角洲行动国服官网","scope":"国服","region":"CN",
                  "tags":["ammo"],"url":"https://steamcommunity.com/app/2507950/announcements/detail/1",
                  "published_at":"2026-10-15T11:00:00Z","expires_at":"2026-11-14T11:00:00Z"},
                 {"title":"old rumor","summary":"old","source":"unknown",
@@ -127,7 +120,7 @@ class ReportRenderingTests(unittest.TestCase):
         rendered = render_news_section(fresh,{"status":"ok","last_success_at":"2026-10-15T12:00:00Z"},now=NOW)
         self.assertIn("&lt;Ammo update&gt;",rendered)
         self.assertNotIn("old rumor",rendered)
-        self.assertIn("Steam 国际服",rendered)
+        self.assertIn("国服",rendered)
         self.assertIn("查看来源",rendered)
 
     def test_weekly_renderer_does_not_duplicate_shared_rolling_table(self):
