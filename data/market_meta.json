@@ -1,8 +1,11 @@
 {
   "source": "moligod.com",
-  "started_at_utc": "2026-10-15T14:10:50.950126Z",
-  "completed_at_utc": "2026-10-15T14:12:38.183714Z",
+  "started_at_utc": "2026-10-15T18:19:22.846215Z",
+  "completed_at_utc": "2026-10-15T18:20:50.284160Z",
   "catalog_count": 67,
   "history_count": 68,
-  "history_window_days": 30
+  "history_window_days": 30,
+  "target_region": "CN",
+  "history_timezone": "Asia/Shanghai",
+  "region_note": "用户指定国服；moligod为第三方行情，交易前须核对国服实盘。"
 }
