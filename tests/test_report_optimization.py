@@ -160,6 +160,7 @@ class WorkflowIntegrationTests(unittest.TestCase):
                 self.assertIn("cloud_news.py",text)
                 self.assertLess(text.index("cloud_news.py"),text.index("cloud_report_all.py"))
                 self.assertIn("continue-on-error: true",text)
+                self.assertIn("workflow_dispatch:",text)
 
 
 if __name__ == "__main__":
