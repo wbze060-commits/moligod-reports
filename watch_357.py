@@ -76,7 +76,7 @@ def main():
         msg = [
             '🚨 .357 Magnum FMJ（四级弹）冲高提醒',
             '',
-            '监测时间：%s' % now.strftime('%m-%d %H:%M'),
+            '监测时间（北京时间）：%s' % now.strftime('%m-%d %H:%M'),
             '最新价：%s',
             '今日最高：%s',
             '',
