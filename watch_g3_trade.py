@@ -160,7 +160,7 @@ def main():
         pushed = 0
         if buys:
             title = '🟢 三级弹买入提醒 %d 项' % len(buys)
-            lines = ['监测时间 %s' % now, '']
+            lines = ['监测时间（北京时间）%s' % now, '']
             for name, p, buy, bep in buys:
                 lines.append('■ %s' % name)
                 lines.append('  现价 %s ≤ 买入线 %s' % (p, buy))
