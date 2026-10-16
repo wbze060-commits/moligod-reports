@@ -4,6 +4,7 @@
 把市场概览/持仓/涨跌榜/可入手/消息面全部塞进推送，链接仅作补充。
 """
 import json, os, sys, re, datetime, urllib.request, urllib.parse
+from report_brief import push_summary
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 PAGES = 'https://wbze060-commits.github.io/moligod-reports/reports/'
@@ -91,6 +92,24 @@ def extract_trade_plans(html, limit=3):
     return result
 
 
+def extract_report_brief(html):
+    """Read the exact same structured brief that the HTML page displays."""
+    match = re.search(
+        r'<script type="application/json" id="report-brief-data">(.*?)</script>', html, re.S
+    )
+    if not match:
+        return None
+    try:
+        brief = json.loads(match.group(1))
+    except (TypeError, ValueError):
+        return None
+    if not isinstance(brief, dict) or brief.get('schema') != 1 or brief.get('region') != 'CN':
+        return None
+    if brief.get('kind') not in ('daily', 'weekly') or not isinstance(brief.get('cards'), list):
+        return None
+    return brief
+
+
 def extract_news(html, limit=3):
     """提取报告中的官方公告和仍有效的人工观点。"""
     match = re.search(
@@ -130,68 +149,31 @@ def main():
         print('NO_REPORT', html_path); sys.exit(1)
     html = open(html_path, encoding='utf-8').read()
 
-    lines = ['**国服 moligod %s · %s**' % (label, date), '']
-    plans = extract_trade_plans(html)
-    if plans:
-        lines.append('🎯 国服买卖计划（北京时间）：')
-        lines.extend('- ' + text for text in plans)
-        lines.append('到价后核对国服挂单；未记录你的真实持仓成本，模拟空间不保证成交或盈利。')
-        lines.append('')
+    brief = extract_report_brief(html)
+    if brief:
+        desp = push_summary(brief, date, PAGES, rtype)
+        title = '国服 moligod %s %s' % (label, date)
+        response = push(key, title, desp)
+        if response.get('code') == 0:
+            print('PUSH_OK pushid=', response.get('data', {}).get('pushid'))
+        else:
+            print('PUSH_FAIL code=', response.get('code'))
+            sys.exit(1)
+        return
 
-    tags = extract_overview(html)
-    if tags:
-        lines.append('📊 市场概览：')
-        for t in tags:
-            lines.append('- ' + t)
-        lines.append('')
-
-    hld = extract_holdings(html)
-    if hld:
-        lines.append('📈 关注子弹今日：')
-        for n, cur, chg in hld:
-            lines.append('- %s：最新 %s（%s）' % (n, cur, chg))
-        lines.append('')
-
-    ups = extract_rank(html, '涨幅榜', 3)
-    if ups:
-        lines.append('🔺 涨幅 TOP3：')
-        for n, g, chg, cur in ups:
-            lines.append('- %s：%s（现价 %s）' % (n, chg, cur))
-        lines.append('')
-
-    downs = extract_rank(html, '跌幅榜', 3)
-    if downs:
-        lines.append('🔻 跌幅 TOP3：')
-        for n, g, chg, cur in downs:
-            lines.append('- %s：%s（现价 %s）' % (n, chg, cur))
-        lines.append('')
-
-    top = extract_top_buy(html)
-    if top:
-        lines.append('🎯 当前可入手（3级弹）：')
-        for n, cur, sp in top:
-            lines.append('- %s：现价 %s，空间 %s' % (n, cur, sp))
-        lines.append('')
-
-    news = extract_news(html)
-    if news:
-        lines.append('📰 官方公告 / 有效观点：')
-        for it in news:
-            lines.append('- ' + it[:80])
-        lines.append('')
-
-    enc = lambda s: urllib.parse.quote(s, safe='/:')
-    lines.append('📄 [完整报告 HTML](%s%s)' % (PAGES, enc(fname + '.html')))
-    lines.append('📄 [PDF 版](%s%s)' % (PAGES, enc(fname + '.pdf')))
-
-    desp = '\n'.join(lines)
+    # Old stored reports retain their link, but avoid resending the old wall of text.
+    name = urllib.parse.quote(fname, safe='')
+    desp = ('**国服 moligod %s · %s**\n\n'
+            '这份旧报告没有精简摘要，请打开HTML查看。\n\n'
+            '[打开报告 HTML](%s%s.html) · [PDF 版](%s%s.pdf)') % (
+                label, date, PAGES, name, PAGES, name)
     title = 'moligod %s %s' % (label, date)
     resp = push(key, title, desp)
     code = resp.get('code')
     if code == 0:
         print('PUSH_OK pushid=', resp.get('data', {}).get('pushid'))
     else:
-        print('PUSH_FAIL', resp)
+        print('PUSH_FAIL code=', code)
         sys.exit(1)
 
 

@@ -4,8 +4,8 @@ import json
 import os
 from pathlib import Path
 import sys
-import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(os.environ.get('PROJECT_ROOT', Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(ROOT))
@@ -44,16 +44,21 @@ def plan_fixture(kind='daily'):
 class HistoryTests(unittest.TestCase):
     def test_archive_backfill_keeps_recent_snapshot_and_calendar_window(self):
         from cloud_fetch import archived_daily
-        with tempfile.TemporaryDirectory(dir=ROOT) as directory:
-            folder=Path(directory)
-            def save(day,price):
-                data={'1':{'r30':[{'time':'2026-10-01','avg':price,'min':price,'max':price,'last':price},
-                                  {'time':'2026-08-01','avg':1,'min':1,'max':1,'last':1}]}}
-                (folder/('history_'+day+'.json')).write_text(json.dumps(data),encoding='utf-8')
-            save('2026-10-01',100); save('2026-10-14',120)
+        folder=Path('fixture_archive')
+        fixtures={}
+        for day,price in [('2026-10-01',100),('2026-10-14',120)]:
+            record={'1':{'r30':[{'time':'2026-10-01','avg':price,'min':price,'max':price,'last':price},
+                                {'time':'2026-08-01','avg':1,'min':1,'max':1,'last':1}]}}
+            fixtures['history_'+day+'.json']=json.dumps(record)
+        original_glob,original_read=Path.glob,Path.read_text
+        def fake_glob(self,pattern):
+            return [Path(name) for name in fixtures] if self==folder else original_glob(self,pattern)
+        def fake_read(self,*args,**kwargs):
+            return fixtures[self.name] if self.name in fixtures else original_read(self,*args,**kwargs)
+        with patch.object(Path,'glob',fake_glob),patch.object(Path,'read_text',fake_read):
             result=archived_daily(folder,NOW.date())
-            self.assertEqual(result['1']['2026-10-01']['avg'],120)
-            self.assertNotIn('2026-08-01',result['1'])
+        self.assertEqual(result['1']['2026-10-01']['avg'],120)
+        self.assertNotIn('2026-08-01',result['1'])
     def test_hourly_fallback_aggregates_all_hours_and_prefers_recent_duplicate(self):
         hist = {'r30': [], 'r15':[{'time':'10-14 06:00','avg':80,'min':70,'max':90,'last':85},
                                  {'time':'10-14 07:00','avg':120,'min':100,'max':130,'last':125}],
@@ -157,16 +162,19 @@ class ActionsTests(unittest.TestCase):
 
     def test_freeze_prices_but_refresh_current_quote(self):
         from cloud_trade import get_plan,write_json
-        with tempfile.TemporaryDirectory(dir=ROOT) as directory:
-            base=Path(directory); (base/'data').mkdir()
-            write_json(base/'data/catalog.json',{'1':{'name':'test','grade':3,'latest':100}})
-            write_json(base/'data/history_latest.json',{'1':history_fixture()})
-            write_json(base/'data/market_meta.json',META)
-            first,_=get_plan(base,'daily',NOW)
-            write_json(base/'data/catalog.json',{'1':{'name':'test','grade':3,'latest':108}})
-            second,_=get_plan(base,'daily',NOW)
-            self.assertEqual(first['candidates'][0]['buy_high'],second['candidates'][0]['buy_high'])
-            self.assertEqual(second['candidates'][0]['latest'],108)
+        memory={'catalog.json':{'1':{'name':'test','grade':3,'latest':100}},
+                'history_latest.json':{'1':history_fixture()},'market_meta.json':META,
+                'trade_config.json':trade.settings()}
+        def read(path,default):
+            return copy.deepcopy(memory.get(Path(path).name,default))
+        def write(path,value):
+            memory[Path(path).name]=copy.deepcopy(value)
+        with patch('cloud_trade.read_json',side_effect=read),patch('cloud_trade.write_json',side_effect=write):
+            first,_=get_plan(Path('fixture-root'),'daily',NOW)
+            memory['catalog.json']={'1':{'name':'test','grade':3,'latest':108}}
+            second,_=get_plan(Path('fixture-root'),'daily',NOW)
+        self.assertEqual(first['candidates'][0]['buy_high'],second['candidates'][0]['buy_high'])
+        self.assertEqual(second['candidates'][0]['latest'],108)
 
 
 class NewsTests(unittest.TestCase):
@@ -188,15 +196,16 @@ class NewsTests(unittest.TestCase):
 
     def test_wechat_plan_preserves_price_windows_expiry_and_does_not_invent_holdings(self):
         from cloud_report_all import render_trade_plan
-        from cloud_push import extract_trade_plans
+        from cloud_push import extract_report_brief
         item=candidate()
         item.update(samples=15,backtest={'opportunities':5,'fills':4,'target_hits':3,'hit_rate':0.75,
                                          'net_total_per_unit':12},backtest_basis='fixture')
         plan=plan_fixture(); plan['candidates']=[item]
-        texts=extract_trade_plans(render_trade_plan(plan,META,NOW))
-        self.assertIn('06:00',texts[0])
-        self.assertIn('2026-10-15 18:59',texts[0])
-        self.assertIn('卖出目标 130',texts[0])
+        html=render_trade_plan(plan,META,NOW)
+        brief=extract_report_brief(html)
+        self.assertIn('06–11买',brief['window'])
+        self.assertIn('130',html)
+        self.assertIn('95–100',html)
 
 
 if __name__=='__main__':

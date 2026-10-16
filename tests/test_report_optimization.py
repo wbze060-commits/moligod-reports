@@ -1,10 +1,11 @@
 import json
 import os
 import sys
-import tempfile
 import unittest
+from io import StringIO
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from unittest.mock import patch
 
 PROJECT = Path(os.environ["PROJECT_ROOT"])
 sys.path.insert(0, str(PROJECT))
@@ -48,20 +49,17 @@ class NewsRefreshTests(unittest.TestCase):
         self.assertEqual([x["line"] for x in result["outlook"]], ["current view"])
 
     def test_refresh_failure_preserves_last_successful_news(self):
-        import cloud_news
-        with tempfile.TemporaryDirectory(dir=PROJECT) as tmp:
-            news_path = Path(tmp) / "news.json"
-            status_path = Path(tmp) / "status.json"
-            original = {"updated":"2026-10-01T00:00:00Z","headlines":[{"title":"last good"}]}
-            news_path.write_text(json.dumps(original),encoding="utf-8")
-            def fail_fetch():
-                raise OSError("offline")
-            ok = cloud_news.refresh_news(news_path,status_path,fetcher=fail_fetch,now=NOW)
-            self.assertFalse(ok)
-            self.assertEqual(json.loads(news_path.read_text(encoding="utf-8")),original)
-            self.assertEqual(json.loads(status_path.read_text(encoding="utf-8"))["status"],"error")
-
-
+        import cn_news
+        original = {"updated":"2026-10-01T00:00:00Z","headlines":[{"title":"last good"}]}
+        stored = {'news.json': json.dumps(original)}
+        writes = {}
+        def fail_fetch():
+            raise OSError("offline")
+        with patch.object(cn_news, '_write', side_effect=lambda path, value: writes.update({Path(path).name: value})):
+            ok = cn_news.refresh_news('news.json', 'status.json', fetcher=fail_fetch, now=NOW)
+        self.assertFalse(ok)
+        self.assertEqual(json.loads(stored['news.json']), original)
+        self.assertEqual(writes['status.json']['status'], 'error')
 class RollingMarketTests(unittest.TestCase):
     def test_date_parser_handles_iso_and_month_day_rollover(self):
         as_of = datetime(2026, 1, 3).date()
