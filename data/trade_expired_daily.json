@@ -1,0 +1,164 @@
+{
+  "schema_version": 1,
+  "region": "CN",
+  "kind": "daily",
+  "id": "daily-2026-10-16",
+  "generated_at": "2026-10-16T02:20:52.633660+08:00",
+  "valid_from": "2026-10-16T06:00:00+08:00",
+  "valid_until": "2026-10-16T18:59:59+08:00",
+  "fee_rate": 0.13,
+  "sale_slippage": 0.02,
+  "quote_collected_at": "2026-10-15T18:20:50.284160Z",
+  "candidates": [
+    {
+      "buy_low": 463,
+      "buy_high": 487,
+      "sell_target": 589,
+      "break_even": 560,
+      "break_even_with_slippage": 572,
+      "invalidate_below": 463,
+      "net_per_round": 15.18,
+      "net_margin_pct": 3.12,
+      "exit_at_floor_net_loss_pct": 18.94,
+      "samples": 15,
+      "backtest": {
+        "opportunities": 5,
+        "fills": 4,
+        "target_hits": 2,
+        "hit_rate": 0.5,
+        "net_total_per_unit": -166.0,
+        "worst_net_pct": -20.91
+      },
+      "backtest_basis": "先训练后验证；最近5天为留出期，按小时收盘顺序模拟",
+      "item_id": "1359",
+      "name": "12.7x55mm PS12A",
+      "grade": "3",
+      "latest": 624.0,
+      "latest_bar_at": "2026-10-16T01:00:00+08:00",
+      "qualified": false,
+      "qualification": "回测样本或表现不足，仅观察"
+    },
+    {
+      "buy_low": 617,
+      "buy_high": 649,
+      "sell_target": 785,
+      "break_even": 746,
+      "break_even_with_slippage": 762,
+      "invalidate_below": 617,
+      "net_per_round": 20.29,
+      "net_margin_pct": 3.13,
+      "exit_at_floor_net_loss_pct": 18.94,
+      "samples": 15,
+      "backtest": {
+        "opportunities": 5,
+        "fills": 3,
+        "target_hits": 1,
+        "hit_rate": 0.3333333333333333,
+        "net_total_per_unit": -233.62,
+        "worst_net_pct": -22.68
+      },
+      "backtest_basis": "先训练后验证；最近5天为留出期，按小时收盘顺序模拟",
+      "item_id": "1378",
+      "name": "45-70 Govt RN",
+      "grade": "3",
+      "latest": 614.0,
+      "latest_bar_at": "2026-10-16T01:00:00+08:00",
+      "qualified": false,
+      "qualification": "回测样本或表现不足，仅观察"
+    },
+    {
+      "buy_low": 1568,
+      "buy_high": 1650,
+      "sell_target": 1994,
+      "break_even": 1897,
+      "break_even_with_slippage": 1936,
+      "invalidate_below": 1568,
+      "net_per_round": 50.08,
+      "net_margin_pct": 3.04,
+      "exit_at_floor_net_loss_pct": 18.98,
+      "samples": 15,
+      "backtest": {
+        "opportunities": 5,
+        "fills": 3,
+        "target_hits": 1,
+        "hit_rate": 0.3333333333333333,
+        "net_total_per_unit": -239.2,
+        "worst_net_pct": -11.11
+      },
+      "backtest_basis": "先训练后验证；最近5天为留出期，按小时收盘顺序模拟",
+      "item_id": "1350",
+      "name": "碳纤维刺骨箭矢",
+      "grade": "4",
+      "latest": 1644.0,
+      "latest_bar_at": "2026-10-16T01:00:00+08:00",
+      "qualified": false,
+      "qualification": "回测样本或表现不足，仅观察"
+    }
+  ],
+  "excluded": [
+    {
+      "name": "12 Gauge DART",
+      "reason": "完整早盘/午后样本0天，至少需要10天"
+    },
+    {
+      "name": "4.6 x 30mm CT",
+      "reason": "完整早盘/午后样本0天，至少需要10天"
+    },
+    {
+      "name": "4.6 x 30mm FMJ ST",
+      "reason": "完整早盘/午后样本0天，至少需要10天"
+    },
+    {
+      "name": "5.7 x 28mm HT+",
+      "reason": "完整早盘/午后样本0天，至少需要10天"
+    },
+    {
+      "name": "5.7x28mm HT",
+      "reason": "完整早盘/午后样本0天，至少需要10天"
+    }
+  ],
+  "config": {
+    "region": "CN",
+    "fee_rate": 0.13,
+    "sale_slippage": 0.02,
+    "daily_min_net_margin": 0.03,
+    "weekly_min_net_margin": 0.06,
+    "quote_drop_limit": 0.05,
+    "max_quote_age_minutes": 180,
+    "morning_hours": [
+      6,
+      11
+    ],
+    "afternoon_hours": [
+      13,
+      18
+    ],
+    "daily_min_train_days": 5,
+    "daily_test_days": 5,
+    "daily_min_test_fills": 3,
+    "weekly_min_train_days": 14,
+    "weekly_min_test_fills": 2,
+    "min_test_hit_rate": 0.6,
+    "max_weekly_decline": 0.07,
+    "max_candidates": 3
+  },
+  "risk": "moligod为第三方行情，国服挂单价格须在游戏内核对；回测不含成交量、排队、保证金及额外费用，不能保证成交或盈利。",
+  "source_config": {
+    "region": "CN",
+    "fee_rate": 0.13,
+    "sale_slippage": 0.02,
+    "morning_hours": [
+      6,
+      11
+    ],
+    "afternoon_hours": [
+      13,
+      18
+    ],
+    "daily_min_net_margin": 0.03,
+    "weekly_min_net_margin": 0.06,
+    "quote_drop_limit": 0.05,
+    "max_quote_age_minutes": 180,
+    "max_candidates": 3
+  }
+}
