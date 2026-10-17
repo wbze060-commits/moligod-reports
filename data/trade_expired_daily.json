@@ -2,25 +2,53 @@
   "schema_version": 1,
   "region": "CN",
   "kind": "daily",
-  "id": "daily-2026-10-16",
-  "generated_at": "2026-10-16T02:20:52.633660+08:00",
-  "valid_from": "2026-10-16T06:00:00+08:00",
-  "valid_until": "2026-10-16T18:59:59+08:00",
+  "id": "daily-2026-10-17",
+  "generated_at": "2026-10-16T20:30:08.003947+08:00",
+  "valid_from": "2026-10-17T06:00:00+08:00",
+  "valid_until": "2026-10-17T18:59:59+08:00",
   "fee_rate": 0.13,
   "sale_slippage": 0.02,
-  "quote_collected_at": "2026-10-15T18:20:50.284160Z",
+  "quote_collected_at": "2026-10-16T12:30:05.876475Z",
   "candidates": [
     {
-      "buy_low": 463,
-      "buy_high": 487,
+      "buy_low": 225,
+      "buy_high": 236,
+      "sell_target": 292,
+      "break_even": 272,
+      "break_even_with_slippage": 277,
+      "invalidate_below": 225,
+      "net_per_round": 12.96,
+      "net_margin_pct": 5.49,
+      "exit_at_floor_net_loss_pct": 18.71,
+      "samples": 14,
+      "backtest": {
+        "opportunities": 5,
+        "fills": 2,
+        "target_hits": 1,
+        "hit_rate": 0.5,
+        "net_total_per_unit": 13.67,
+        "worst_net_pct": -3.27
+      },
+      "backtest_basis": "先训练后验证；最近5天为留出期，按小时收盘顺序模拟",
+      "item_id": "1368",
+      "name": ".357 Magnum 9号霰射\"鼠弹\"",
+      "grade": "3",
+      "latest": 273.0,
+      "latest_bar_at": "2026-10-16T19:00:00+08:00",
+      "qualified": false,
+      "qualification": "回测样本或表现不足，仅观察"
+    },
+    {
+      "buy_low": 462,
+      "buy_high": 486,
       "sell_target": 589,
-      "break_even": 560,
-      "break_even_with_slippage": 572,
-      "invalidate_below": 463,
-      "net_per_round": 15.18,
-      "net_margin_pct": 3.12,
-      "exit_at_floor_net_loss_pct": 18.94,
-      "samples": 15,
+      "break_even": 559,
+      "break_even_with_slippage": 571,
+      "invalidate_below": 462,
+      "net_per_round": 16.18,
+      "net_margin_pct": 3.33,
+      "exit_at_floor_net_loss_pct": 18.95,
+      "samples": 14,
       "backtest": {
         "opportunities": 5,
         "fills": 4,
@@ -33,22 +61,22 @@
       "item_id": "1359",
       "name": "12.7x55mm PS12A",
       "grade": "3",
-      "latest": 624.0,
-      "latest_bar_at": "2026-10-16T01:00:00+08:00",
+      "latest": 589.0,
+      "latest_bar_at": "2026-10-16T19:00:00+08:00",
       "qualified": false,
       "qualification": "回测样本或表现不足，仅观察"
     },
     {
-      "buy_low": 617,
-      "buy_high": 649,
-      "sell_target": 785,
-      "break_even": 746,
-      "break_even_with_slippage": 762,
-      "invalidate_below": 617,
-      "net_per_round": 20.29,
-      "net_margin_pct": 3.13,
-      "exit_at_floor_net_loss_pct": 18.94,
-      "samples": 15,
+      "buy_low": 620,
+      "buy_high": 652,
+      "sell_target": 788,
+      "break_even": 750,
+      "break_even_with_slippage": 765,
+      "invalidate_below": 620,
+      "net_per_round": 19.85,
+      "net_margin_pct": 3.04,
+      "exit_at_floor_net_loss_pct": 18.92,
+      "samples": 14,
       "backtest": {
         "opportunities": 5,
         "fills": 3,
@@ -61,43 +89,23 @@
       "item_id": "1378",
       "name": "45-70 Govt RN",
       "grade": "3",
-      "latest": 614.0,
-      "latest_bar_at": "2026-10-16T01:00:00+08:00",
-      "qualified": false,
-      "qualification": "回测样本或表现不足，仅观察"
-    },
-    {
-      "buy_low": 1568,
-      "buy_high": 1650,
-      "sell_target": 1994,
-      "break_even": 1897,
-      "break_even_with_slippage": 1936,
-      "invalidate_below": 1568,
-      "net_per_round": 50.08,
-      "net_margin_pct": 3.04,
-      "exit_at_floor_net_loss_pct": 18.98,
-      "samples": 15,
-      "backtest": {
-        "opportunities": 5,
-        "fills": 3,
-        "target_hits": 1,
-        "hit_rate": 0.3333333333333333,
-        "net_total_per_unit": -239.2,
-        "worst_net_pct": -11.11
-      },
-      "backtest_basis": "先训练后验证；最近5天为留出期，按小时收盘顺序模拟",
-      "item_id": "1350",
-      "name": "碳纤维刺骨箭矢",
-      "grade": "4",
-      "latest": 1644.0,
-      "latest_bar_at": "2026-10-16T01:00:00+08:00",
+      "latest": 674.0,
+      "latest_bar_at": "2026-10-16T19:00:00+08:00",
       "qualified": false,
       "qualification": "回测样本或表现不足，仅观察"
     }
   ],
   "excluded": [
     {
+      "name": ".357 Magnum FMJ",
+      "reason": "完整早盘/午后样本0天，至少需要10天"
+    },
+    {
       "name": "12 Gauge DART",
+      "reason": "完整早盘/午后样本0天，至少需要10天"
+    },
+    {
+      "name": "12 Gauge 龙息弹",
       "reason": "完整早盘/午后样本0天，至少需要10天"
     },
     {
@@ -106,6 +114,10 @@
     },
     {
       "name": "4.6 x 30mm FMJ ST",
+      "reason": "完整早盘/午后样本0天，至少需要10天"
+    },
+    {
+      "name": "5.45x39mm BT",
       "reason": "完整早盘/午后样本0天，至少需要10天"
     },
     {
