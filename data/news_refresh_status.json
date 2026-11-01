@@ -1,8 +1,8 @@
 {
   "status": "manual_only",
   "region": "CN",
-  "checked_at": "2026-11-01T19:03:31.494331+00:00",
-  "last_success_at": "2026-11-01T19:03:31.494331+00:00",
+  "checked_at": "2026-11-01T19:06:46.341693+00:00",
+  "last_success_at": "2026-11-01T19:06:46.341693+00:00",
   "headline_count": 0,
   "message": "国服自动公告源暂不可用；只展示人工核验的官网链接。",
   "error": null
